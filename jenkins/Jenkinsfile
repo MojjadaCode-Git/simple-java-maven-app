@@ -1,27 +1,40 @@
+
 pipeline {
     agent any
-    options {
-        skipStagesAfterUnstable()
+
+    tools {
+        jdk 'JDK21'                // matches Global Tool name
+        maven 'Maven-3.9.9'        // matches Global Tool name
     }
+
     stages {
-        stage('Build') {
+        stage('Checkout') {
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                git branch: 'master',
+                    url: 'https://github.com/MojjadaCode-Git/simple-java-maven-app.git'
             }
         }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
         stage('Test') {
             steps {
                 sh 'mvn test'
             }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
-            }
         }
-        stage('Deliver') { 
+
+        stage('Package') {
             steps {
-                sh './jenkins/scripts/deliver.sh' 
+                sh 'mvn package'
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+                }
             }
         }
     }
