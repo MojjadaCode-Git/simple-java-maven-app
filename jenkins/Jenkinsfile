@@ -1,10 +1,9 @@
-
 pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'                // matches Global Tool name
-        maven 'Maven-3.9.9'        // matches Global Tool name
+        jdk 'JDK21'                // matches Global Tool name in Jenkins
+        maven 'Maven-3.9.9'        // matches Global Tool name in Jenkins
     }
 
     stages {
@@ -36,6 +35,30 @@ pipeline {
                     archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
                 }
             }
+        }
+
+        stage('Run Application') {
+            steps {
+                // stop old instance if running
+                sh 'pkill -f "my-app-1.0-SNAPSHOT.jar" || true'
+                // run new jar in background and log output
+                sh 'nohup java -jar target/my-app-1.0-SNAPSHOT.jar > app.log 2>&1 &'
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh 'tail -n 10 app.log || true'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Build, Test, Package, and Run completed successfully!"
+        }
+        failure {
+            echo "❌ Build failed. Please check console output."
         }
     }
 }
