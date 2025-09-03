@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'
-        maven 'Maven-3.9.9'
+        jdk 'JDK21'             // Must match your Jenkins Global Tool Config
+        maven 'Maven-3.9.9'     // Must match Jenkins Global Tool Config
     }
 
     stages {
@@ -43,7 +43,7 @@ pipeline {
             post {
                 success {
                     echo "Archiving build artifacts..."
-                    archiveArtifacts artifacts: '**/target/*.jar, **/target/*.war', fingerprint: true
+                    archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
                 }
             }
         }
@@ -58,15 +58,27 @@ pipeline {
         stage('Deploy to Tomcat') {
             steps {
                 echo "Deploying WAR to Tomcat..."
+
+                // Change TOMCAT_HOME if your Tomcat is installed in another path
                 sh '''
-                    # remove old deployment
-                    rm -rf /opt/tomcat/webapps/my-app*
+                    TOMCAT_HOME=/opt/tomcat
 
-                    # copy new WAR
-                    cp target/*.war /opt/tomcat/webapps/my-app.war
+                    if [ ! -d "$TOMCAT_HOME/webapps" ]; then
+                      echo "❌ Tomcat webapps directory not found at $TOMCAT_HOME/webapps"
+                      exit 1
+                    fi
 
-                    # restart tomcat so app reloads
-                    systemctl restart tomcat
+                    echo "Stopping Tomcat..."
+                    sudo systemctl stop tomcat || true
+
+                    echo "Removing old app..."
+                    sudo rm -rf $TOMCAT_HOME/webapps/my-app*
+
+                    echo "Copying new WAR..."
+                    sudo cp target/*.war $TOMCAT_HOME/webapps/my-app.war
+
+                    echo "Starting Tomcat..."
+                    sudo systemctl start tomcat
                 '''
             }
         }
