@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'             // Must match your Jenkins Global Tool Config
-        maven 'Maven-3.9.9'     // Must match Jenkins Global Tool Config
+        jdk 'JDK21'
+        maven 'Maven-3.9.9'
     }
 
     stages {
@@ -43,7 +43,7 @@ pipeline {
             post {
                 success {
                     echo "Archiving build artifacts..."
-                    archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
+                    archiveArtifacts artifacts: '**/target/*.jar, **/target/*.war', fingerprint: true
                 }
             }
         }
@@ -57,28 +57,16 @@ pipeline {
 
         stage('Deploy to Tomcat') {
             steps {
-                echo "Deploying WAR to Tomcat..."
-
-                // Change TOMCAT_HOME if your Tomcat is installed in another path
+                echo "Deploying WAR to Tomcat on port 8081..."
                 sh '''
-                    TOMCAT_HOME=/opt/tomcat
+                    # remove old deployment
+                    sudo rm -rf /opt/tomcat/webapps/my-app*
 
-                    if [ ! -d "$TOMCAT_HOME/webapps" ]; then
-                      echo "❌ Tomcat webapps directory not found at $TOMCAT_HOME/webapps"
-                      exit 1
-                    fi
+                    # copy new WAR
+                    sudo cp target/*.war /opt/tomcat/webapps/my-app.war
 
-                    echo "Stopping Tomcat..."
-                    sudo systemctl stop tomcat || true
-
-                    echo "Removing old app..."
-                    sudo rm -rf $TOMCAT_HOME/webapps/my-app*
-
-                    echo "Copying new WAR..."
-                    sudo cp target/*.war $TOMCAT_HOME/webapps/my-app.war
-
-                    echo "Starting Tomcat..."
-                    sudo systemctl start tomcat
+                    # restart Tomcat
+                    sudo systemctl restart tomcat
                 '''
             }
         }
@@ -87,6 +75,7 @@ pipeline {
     post {
         success {
             echo "✅ Build + Deploy succeeded!"
+            echo "Application available at: http://<EC2-Public-IP>:8081/my-app/"
         }
         failure {
             echo "❌ Build failed. Please check console output."
