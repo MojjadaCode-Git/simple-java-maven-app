@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'                // matches Global Tool name in Jenkins
-        maven 'Maven-3.9.9'        // matches Global Tool name in Jenkins
+        // Make sure these names match your Global Tool Config
+        jdk 'JDK21'
+        maven 'Maven-3.9.9'
     }
 
     stages {
@@ -14,48 +15,58 @@ pipeline {
             }
         }
 
+        stage('Clean Workspace') {
+            steps {
+                echo "Cleaning old build files..."
+                sh 'rm -rf target'
+            }
+        }
+
         stage('Build') {
             steps {
+                echo "Building project..."
                 sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('Test') {
             steps {
+                echo "Running tests..."
                 sh 'mvn test'
             }
         }
 
         stage('Package') {
             steps {
+                echo "Packaging application..."
                 sh 'mvn package'
             }
             post {
                 success {
-                    archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+                    echo "Archiving build artifacts..."
+                    archiveArtifacts artifacts: '**/target/*.jar, **/target/*.war', fingerprint: true
                 }
             }
         }
 
         stage('Run Application') {
             steps {
-                // stop old instance if running
-                sh 'pkill -f "my-app-1.0-SNAPSHOT.jar" || true'
-                // run new jar in background and log output
-                sh 'nohup java -jar target/my-app-1.0-SNAPSHOT.jar > app.log 2>&1 &'
+                echo "Simulating application run..."
+                sh 'echo "Running application JAR/WAR..."'
             }
         }
 
         stage('Verify') {
             steps {
-                sh 'tail -n 10 app.log || true'
+                echo "Verifying build..."
+                sh 'ls -lh target || true'
             }
         }
     }
 
     post {
         success {
-            echo "✅ Build, Test, Package, and Run completed successfully!"
+            echo "✅ Build succeeded!"
         }
         failure {
             echo "❌ Build failed. Please check console output."
