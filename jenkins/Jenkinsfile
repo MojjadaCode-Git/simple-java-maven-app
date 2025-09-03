@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     tools {
-        // Make sure these names match your Global Tool Config
         jdk 'JDK21'
         maven 'Maven-3.9.9'
     }
@@ -49,24 +48,33 @@ pipeline {
             }
         }
 
-        stage('Run Application') {
-            steps {
-                echo "Simulating application run..."
-                sh 'echo "Running application JAR/WAR..."'
-            }
-        }
-
         stage('Verify') {
             steps {
                 echo "Verifying build..."
                 sh 'ls -lh target || true'
             }
         }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                echo "Deploying WAR to Tomcat..."
+                sh '''
+                    # remove old deployment
+                    rm -rf /opt/tomcat/webapps/my-app*
+
+                    # copy new WAR
+                    cp target/*.war /opt/tomcat/webapps/my-app.war
+
+                    # restart tomcat so app reloads
+                    systemctl restart tomcat
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo "✅ Build succeeded!"
+            echo "✅ Build + Deploy succeeded!"
         }
         failure {
             echo "❌ Build failed. Please check console output."
