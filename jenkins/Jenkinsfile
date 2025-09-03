@@ -42,30 +42,22 @@ pipeline {
             }
             post {
                 success {
-                    echo "Archiving build artifacts..."
-                    archiveArtifacts artifacts: '**/target/*.jar, **/target/*.war', fingerprint: true
+                    archiveArtifacts artifacts: '**/target/*.war', fingerprint: true
                 }
-            }
-        }
-
-        stage('Verify') {
-            steps {
-                echo "Verifying build..."
-                sh 'ls -lh target || true'
             }
         }
 
         stage('Deploy to Tomcat') {
             steps {
-                echo "Deploying WAR to Tomcat on port 8081..."
+                echo "Deploying WAR to Tomcat..."
                 sh '''
-                    # remove old deployment
+                    # remove old WAR
                     sudo rm -rf /opt/tomcat/webapps/my-app*
 
                     # copy new WAR
                     sudo cp target/*.war /opt/tomcat/webapps/my-app.war
 
-                    # restart Tomcat
+                    # restart tomcat
                     sudo systemctl restart tomcat
                 '''
             }
@@ -75,7 +67,7 @@ pipeline {
     post {
         success {
             echo "✅ Build + Deploy succeeded!"
-            echo "Application available at: http://<EC2-Public-IP>:8081/my-app/"
+            echo "Access app at: http://100.26.175.123:8081/my-app/"
         }
         failure {
             echo "❌ Build failed. Please check console output."
