@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'   // make sure you configured Maven in Jenkins global tools with name "Maven"
+        maven 'Maven'
     }
 
     stages {
@@ -50,13 +50,8 @@ pipeline {
             steps {
                 echo "🚀 Deploying WAR to Tomcat as ROOT..."
                 sh '''
-                    # remove old ROOT app
                     sudo rm -rf /opt/tomcat/webapps/ROOT*
-
-                    # copy new WAR as ROOT.war
                     sudo cp target/*.war /opt/tomcat/webapps/ROOT.war
-
-                    # restart tomcat
                     sudo systemctl restart tomcat
                 '''
             }
