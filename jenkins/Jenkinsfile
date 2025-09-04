@@ -48,10 +48,17 @@ pipeline {
 
         stage('Deploy to Tomcat') {
             steps {
-                echo "Deploying WAR to Tomcat..."
-                deploy adapters: [tomcat9(credentialsId: 'tomcat-creds', url: 'http://13.219.135.216:8080')],
-                       contextPath: '/myapp',
-                       war: 'target/*.war'
+                echo "Deploying WAR to Tomcat as ROOT..."
+                sh '''
+                    # remove old ROOT app
+                    sudo rm -rf /opt/tomcat/webapps/ROOT*
+
+                    # copy new WAR as ROOT.war
+                    sudo cp target/*.war /opt/tomcat/webapps/ROOT.war
+
+                    # restart tomcat
+                    sudo systemctl restart tomcat
+                '''
             }
         }
     }
@@ -59,7 +66,7 @@ pipeline {
     post {
         success {
             echo "✅ Build + Deploy succeeded!"
-            echo "Access app at: http://13.219.135.216:8080/myapp/"
+            echo "Access app at: http://13.219.135.216:8080/"
         }
         failure {
             echo "❌ Build failed. Please check console output."
