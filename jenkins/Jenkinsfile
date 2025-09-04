@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'   // make sure Maven tool is added in Jenkins global tools config
+        maven 'Maven'   // make sure you configured Maven in Jenkins global tools with name "Maven"
     }
 
     stages {
@@ -15,28 +15,28 @@ pipeline {
 
         stage('Clean Workspace') {
             steps {
-                echo "Cleaning old build files..."
+                echo "🧹 Cleaning old build files..."
                 sh 'rm -rf target'
             }
         }
 
         stage('Build') {
             steps {
-                echo "Building project..."
+                echo "🔨 Building project..."
                 sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('Test') {
             steps {
-                echo "Running tests..."
+                echo "🧪 Running tests..."
                 sh 'mvn test'
             }
         }
 
         stage('Package') {
             steps {
-                echo "Packaging application..."
+                echo "📦 Packaging application..."
                 sh 'mvn package'
             }
             post {
@@ -48,7 +48,7 @@ pipeline {
 
         stage('Deploy to Tomcat') {
             steps {
-                echo "Deploying WAR to Tomcat as ROOT..."
+                echo "🚀 Deploying WAR to Tomcat as ROOT..."
                 sh '''
                     # remove old ROOT app
                     sudo rm -rf /opt/tomcat/webapps/ROOT*
