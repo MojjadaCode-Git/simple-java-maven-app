@@ -1,9 +1,9 @@
+
 pipeline {
     agent any
 
     tools {
-        jdk 'JDK21'
-        maven 'Maven-3.9.9'
+        maven 'Maven'   // Use the Maven tool you configured in Jenkins UI
     }
 
     stages {
@@ -50,16 +50,9 @@ pipeline {
         stage('Deploy to Tomcat') {
             steps {
                 echo "Deploying WAR to Tomcat..."
-                sh '''
-                    # remove old WAR
-                    sudo rm -rf /opt/tomcat/webapps/my-app*
-
-                    # copy new WAR
-                    sudo cp target/*.war /opt/tomcat/webapps/my-app.war
-
-                    # restart tomcat
-                    sudo systemctl restart tomcat
-                '''
+                deploy adapters: [tomcat9(credentialsId: 'tomcat-creds', url: 'http://13.219.135.216:8080')],
+                       contextPath: '/myapp',
+                       war: 'target/*.war'
             }
         }
     }
@@ -67,7 +60,7 @@ pipeline {
     post {
         success {
             echo "✅ Build + Deploy succeeded!"
-            echo "Access app at: http://100.26.175.123:8081/my-app/"
+            echo "Access app at: http://13.219.135.216:8080/myapp/"
         }
         failure {
             echo "❌ Build failed. Please check console output."
