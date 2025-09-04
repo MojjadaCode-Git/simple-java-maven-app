@@ -2,12 +2,13 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'
+        maven 'Maven'   // Jenkins tool configuration (Manage Jenkins → Tools → Maven installations)
     }
 
     stages {
         stage('Checkout') {
             steps {
+                echo "📥 Checking out source code..."
                 git branch: 'master',
                     url: 'https://github.com/MojjadaCode-Git/simple-java-maven-app.git'
             }
@@ -50,9 +51,14 @@ pipeline {
             steps {
                 echo "🚀 Deploying WAR to Tomcat as ROOT..."
                 sh '''
-                    sudo rm -rf /opt/tomcat/webapps/ROOT*
-                    sudo cp target/*.war /opt/tomcat/webapps/ROOT.war
-                    sudo systemctl restart tomcat
+                    # remove old ROOT app
+                    sudo -S rm -rf /opt/tomcat/webapps/ROOT*
+
+                    # copy new WAR as ROOT.war
+                    sudo -S cp target/*.war /opt/tomcat/webapps/ROOT.war
+
+                    # restart Tomcat service
+                    sudo -S systemctl restart tomcat
                 '''
             }
         }
@@ -61,7 +67,7 @@ pipeline {
     post {
         success {
             echo "✅ Build + Deploy succeeded!"
-            echo "Access app at: http://13.219.135.216:8080/"
+            echo "🌍 Access your app at: http://13.219.135.216:8080/"
         }
         failure {
             echo "❌ Build failed. Please check console output."
